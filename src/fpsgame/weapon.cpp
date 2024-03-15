@@ -26,6 +26,62 @@ namespace game
         d->gunselect = gun;
     }
 
+    //QDeathmatch weapon check
+    bool checkweapontoset(int gunid)
+    {
+        switch (gunid)
+        {
+        case GUN_PISTOL:
+            if (player1->gunbackpack[GUN_PISTOL] && player1->ammo[GUN_SG]) return true;
+            else return false;
+        case GUN_SG:
+            if (player1->gunbackpack[GUN_SG] && player1->ammo[GUN_SG] > 1) return true;
+            else return false;
+        case GUN_CG:
+            if (player1->gunbackpack[GUN_CG] && player1->ammo[GUN_CG]) return true;
+            else return false;
+        case GUN_GL:
+            if (player1->gunbackpack[GUN_GL] && player1->ammo[GUN_RL]) return true;
+            else return false;
+        case GUN_RL:
+            if (player1->gunbackpack[GUN_RL] && player1->ammo[GUN_RL]) return true;
+            else return false;
+        case GUN_RIFLE:
+            if (player1->gunbackpack[GUN_RIFLE] && player1->ammo[GUN_RIFLE]) return true;
+            else return false;
+        default:
+            return false;
+        }
+    }
+
+    bool checkammotoshoot(int gunid)
+    {
+        switch (gunid)
+        {
+        case GUN_PISTOL:
+            if (player1->ammo[GUN_SG]) return true;
+            else return false;
+        case GUN_SG:
+            if (player1->ammo[GUN_SG] > 1) return true;
+            else return false;
+        case GUN_CG:
+            if (player1->ammo[GUN_CG]) return true;
+            else return false;
+        case GUN_GL:
+            if (player1->ammo[GUN_RL]) return true;
+            else return false;
+        case GUN_RL:
+            if (player1->ammo[GUN_RL]) return true;
+            else return false;
+        case GUN_RIFLE:
+            if (player1->ammo[GUN_RIFLE]) return true;
+            else return false;
+        default:
+            return false;
+        }
+    }
+
+    //QDeathmatch: rewrite after
     void gunselect(int gun, fpsent *d)
     {
         switch (gun)
@@ -34,39 +90,40 @@ namespace game
             if (d->ammo[GUN_SG] && d->gunbackpack[GUN_PISTOL] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         case GUN_SG:
             if (d->ammo[GUN_SG] && d->gunbackpack[GUN_SG] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         case GUN_CG:
             if (d->ammo[GUN_RL] && d->gunbackpack[GUN_CG] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         case GUN_GL:
             if (d->ammo[GUN_RL] && d->gunbackpack[GUN_GL] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         case GUN_RL:
             if (d->ammo[GUN_RL] && d->gunbackpack[GUN_RL] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         case GUN_RIFLE:
             if (d->ammo[GUN_RIFLE] && d->gunbackpack[GUN_RIFLE] && gun != d->gunselect)
             {
                 guninformplayer(gun, d);
+                return;
             }
-            break;
         default:
+            playsound(S_NOAMMO);
             return;
         }
     }
@@ -94,12 +151,13 @@ namespace game
         return -1;
     }
 
+    //Keyboard gun set;
     void setweapon(const char *name, bool force = false)
     {
         int gun = getweapon(name);
         if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
-        if(force || player1->ammo[gun]) gunselect(gun, player1);
-        //if (force || player1->gunbackpack[gun]) gunselect(gun, player1);
+        //if(force || player1->ammo[gun]) gunselect(gun, player1);
+        if (force || checkweapontoset(gun)) gunselect(gun, player1);
         else playsound(S_NOAMMO);
     }
     ICOMMAND(setweapon, "si", (char *name, int *force), setweapon(name, *force!=0));
@@ -244,7 +302,8 @@ namespace game
 
         switch(type)
         {
-            case BNC_GRENADE: bnc.collidetype = COLLIDE_ELLIPSE_PRECISE; break;
+            //case BNC_GRENADE: bnc.collidetype = COLLIDE_ELLIPSE_PRECISE; break;
+            case BNC_GRENADE: bnc.collidetype = COLLIDE_OBB; break; //QDeathmatch grenade
             case BNC_DEBRIS: case BNC_BARRELDEBRIS: bnc.variant = rnd(4); break;
             case BNC_GIBS: bnc.variant = rnd(3); break;
         }
@@ -704,9 +763,9 @@ namespace game
                 float dist = from.dist(to);
                 vec up = to;
                 up.z += dist/8;
-                if(muzzleflash && d->muzzle.x >= 0)
-                    particle_flare(d->muzzle, d->muzzle, 200, PART_MUZZLE_FLASH2, 0xFFFFFF, 1.5f, d);
-                if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 20, vec(0.5f, 0.375f, 0.25f), 100, 100, DL_FLASH, 0, vec(0, 0, 0), d);
+                //if(muzzleflash && d->muzzle.x >= 0)
+                    //particle_flare(d->muzzle, d->muzzle, 200, PART_MUZZLE_FLASH2, 0xFFFFFF, 1.5f, d);
+                //if(muzzlelight) adddynlight(hudgunorigin(gun, d->o, to, d), 20, vec(0.5f, 0.375f, 0.25f), 100, 100, DL_FLASH, 0, vec(0, 0, 0), d);
                 newbouncer(from, up, local, id, d, BNC_GRENADE, guns[gun].ttl, guns[gun].projspeed);
                 break;
             }
@@ -846,7 +905,8 @@ namespace game
         if((d==player1 || d->ai) && !d->attacking) return;
         d->lastaction = lastmillis;
         d->lastattackgun = d->gunselect;
-        if(!d->ammo[d->gunselect])
+        //if(!d->ammo[d->gunselect])
+        if (!checkammotoshoot(d->gunselect))
         {
             if(d==player1)
             {
@@ -857,7 +917,7 @@ namespace game
             }
             return;
         }
-
+        
         //QDeathmatch fix guns;
         switch (d->gunselect)
         {
@@ -926,7 +986,7 @@ namespace game
             bouncer &bnc = *bouncers[i];
             if(bnc.bouncetype!=BNC_GRENADE) continue;
             vec pos = bnc.offsetpos();
-            adddynlight(pos, 8, vec(0.25f, 1, 1));
+            //adddynlight(pos, 8, vec(0.25f, 1, 1));
         }
     }
 
