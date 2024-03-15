@@ -1,0 +1,8 @@
+﻿bin
+bin64/qdeathmatch.exe
+bin64/qdeathmatch.map
+bin64/qdeathmatch.pdb
+src/vcpp/.vs
+src/vcpp/Debug
+src/vcpp/Debug64
+src/vcpp/Release64
