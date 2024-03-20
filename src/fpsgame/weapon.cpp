@@ -14,7 +14,7 @@ namespace game
     };
     vector<hitmsg> hits;
 
-    VARP(maxdebris, 10, 25, 1000);
+    VARP(maxdebris, 0, 0, 0); // VARP(maxdebris, 10, 25, 1000);
     VARP(maxbarreldebris, 5, 10, 1000);
 
     ICOMMAND(getweapon, "", (), intret(player1->gunselect));
