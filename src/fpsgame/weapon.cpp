@@ -14,9 +14,6 @@ namespace game
     };
     vector<hitmsg> hits;
 
-    VARP(maxdebris, 0, 0, 0); // VARP(maxdebris, 10, 25, 1000);
-    VARP(maxbarreldebris, 5, 10, 1000);
-
     ICOMMAND(getweapon, "", (), intret(player1->gunselect));
 
     void guninformplayer(int gun, fpsent* d)
@@ -243,7 +240,7 @@ namespace game
         loopi(guns[gun].rays) offsetray(from, to, guns[gun].spread, guns[gun].range, rays[i]);
     }
 
-    enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS, BNC_BARRELDEBRIS };
+    enum { BNC_GRENADE, BNC_GIBS };
 
     struct bouncer : physent
     {
@@ -290,7 +287,7 @@ namespace game
     {
         bouncer &bnc = *bouncers.add(new bouncer);
         bnc.o = from;
-        bnc.radius = bnc.xradius = bnc.yradius = type==BNC_DEBRIS ? 0.5f : 1.5f;
+        bnc.radius = bnc.xradius = bnc.yradius = 1.5f;
         bnc.eyeheight = bnc.radius;
         bnc.aboveeye = bnc.radius;
         bnc.lifetime = lifetime;
@@ -304,7 +301,6 @@ namespace game
         {
             //case BNC_GRENADE: bnc.collidetype = COLLIDE_ELLIPSE_PRECISE; break;
             case BNC_GRENADE: bnc.collidetype = COLLIDE_OBB; break; //QDeathmatch grenade
-            case BNC_DEBRIS: case BNC_BARRELDEBRIS: bnc.variant = rnd(4); break;
             case BNC_GIBS: bnc.variant = rnd(3); break;
         }
 
@@ -352,7 +348,7 @@ namespace game
             if(bnc.bouncetype==BNC_GRENADE) stopped = bounce(&bnc, 0.6f, 0.5f, 0.8f) || (bnc.lifetime -= time)<0;
             else
             {
-                // cheaper variable rate physics for debris, gibs, etc.
+                // cheaper variable rate physics for gibs, etc.
                 for(int rtime = time; rtime > 0;)
                 {
                     int qtime = min(30, rtime);
@@ -544,16 +540,6 @@ namespace game
         if(gun==GUN_RL) adddynlight(v, 1.15f*guns[gun].exprad, vec(2, 1.5f, 1), 700, 100, 0, guns[gun].exprad/2, vec(1, 0.75f, 0.5f));
         else if(gun==GUN_GL) adddynlight(v, 1.15f*guns[gun].exprad, vec(0.5f, 1.5f, 2), 600, 100, 0, 8, vec(0.25f, 1, 1));
         else adddynlight(v, 1.15f*guns[gun].exprad, vec(2, 1.5f, 1), 700, 100);
-        int numdebris = gun==GUN_BARREL ? rnd(max(maxbarreldebris-5, 1))+5 : rnd(maxdebris-5)+5;
-        vec debrisvel = vec(owner->o).sub(v).safenormalize(), debrisorigin(v);
-        if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
-        if(numdebris)
-        {
-            entitylight light;
-            lightreaching(debrisorigin, light.color, light.dir);
-            loopi(numdebris)
-                spawnbouncer(debrisorigin, debrisvel, owner, gun==GUN_BARREL ? BNC_BARRELDEBRIS : BNC_DEBRIS, &light);
-        }
         if(!local) return;
         int numdyn = numdynents();
         loopi(numdyn)
@@ -992,15 +978,11 @@ namespace game
 
     static const char * const projnames[2] = { "projectiles/grenade", "projectiles/rocket" };
     static const char * const gibnames[3] = { "gibs/gib01", "gibs/gib02", "gibs/gib03" };
-    static const char * const debrisnames[4] = { "debris/debris01", "debris/debris02", "debris/debris03", "debris/debris04" };
-    static const char * const barreldebrisnames[4] = { "barreldebris/debris01", "barreldebris/debris02", "barreldebris/debris03", "barreldebris/debris04" };
          
     void preloadbouncers()
     {
         loopi(sizeof(projnames)/sizeof(projnames[0])) preloadmodel(projnames[i]);
         loopi(sizeof(gibnames)/sizeof(gibnames[0])) preloadmodel(gibnames[i]);
-        loopi(sizeof(debrisnames)/sizeof(debrisnames[0])) preloadmodel(debrisnames[i]);
-        loopi(sizeof(barreldebrisnames)/sizeof(barreldebrisnames[0])) preloadmodel(barreldebrisnames[i]);
     }
 
     void renderbouncers()
@@ -1030,8 +1012,6 @@ namespace game
                 switch(bnc.bouncetype)
                 {
                     case BNC_GIBS: mdl = gibnames[bnc.variant]; cull |= MDL_LIGHT|MDL_LIGHT_FAST|MDL_DYNSHADOW; break;
-                    case BNC_DEBRIS: mdl = debrisnames[bnc.variant]; break;
-                    case BNC_BARRELDEBRIS: mdl = barreldebrisnames[bnc.variant]; break;
                     default: continue;
                 }
                 rendermodel(&bnc.light, mdl, ANIM_MAPMODEL|ANIM_LOOP, pos, yaw, pitch, cull, NULL, NULL, 0, 0, fade);
